@@ -1,0 +1,5 @@
+tools:
+  enabled:
+    - get_weather_tool
+    - ai_search_tool
+    - math_tool
