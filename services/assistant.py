@@ -18,8 +18,9 @@ class Assistant:
         tool_instances (list): A list of dynamically loaded tool instances.
         tools_schemas (list): A list of tool schemas in OpenAI format.
         assistant (object): The assistant instance created using the Azure OpenAI client.
-        tool_map (dict): A mapping of tool function names to their respective instances.     
+        tool_map (dict): A mapping of tool function names to their respective instances.
     """
+
     def __init__(self):
         self.client = self._initialize_client()
         self.deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_ID")
@@ -53,7 +54,7 @@ class Assistant:
             instructions=self.role_prompt,
             tools=self.tools_schemas,
             temperature=1,
-            top_p=1
+            top_p=1,
         )
 
     def _map_tools(self):
@@ -70,7 +71,9 @@ class Assistant:
         try:
             arguments = ast.literal_eval(arguments)
             if not isinstance(arguments, dict):
-                raise ValueError("Os argumentos fornecidos não são um dicionário válido.")
+                raise ValueError(
+                    "Os argumentos fornecidos não são um dicionário válido."
+                )
         except (ValueError, SyntaxError) as e:
             raise ValueError(f"Erro ao processar os argumentos: {e}")
 
