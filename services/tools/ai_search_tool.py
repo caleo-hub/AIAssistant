@@ -120,7 +120,14 @@ class AISearchTool(AssistantToolBase):
     def _format_citation(self, results):
         citations = []
         for i, result in enumerate(results, start=1):
-            citations.append({"id": i, "filename": result.get("title", "Sem Título"), "url": result.get("metadata_storage_path","Sem Link"), "score": result.get("score","Sem score")})
+            citations.append(
+                {
+                    "id": i,
+                    "filename": result.get("title", "Sem Título"),
+                    "url": result.get("metadata_storage_path", "Sem Link"),
+                    "score": result.get("score", "Sem score"),
+                }
+            )
         return citations
 
     def _process_results(self, results):
@@ -132,10 +139,16 @@ class AISearchTool(AssistantToolBase):
         """
         processed_results = [
             {
-            "chunk": result.get("chunk", "")[:300],  # Limita o chunk a 300 caracteres
-            "title": result.get("title", "sem título"),
-            "metadata_storage_path": result.get("metadata_storage_path", "sem nome"),
-            "score": result.get("@search.score", 0),  # Adiciona o score de relevância
+                "chunk": result.get("chunk", "")[
+                    :300
+                ],  # Limita o chunk a 300 caracteres
+                "title": result.get("title", "sem título"),
+                "metadata_storage_path": result.get(
+                    "metadata_storage_path", "sem nome"
+                ),
+                "score": result.get(
+                    "@search.score", 0
+                ),  # Adiciona o score de relevância
             }
             for result in results
         ]

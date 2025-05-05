@@ -26,14 +26,19 @@ def test_get_enabled_tools_from_config(mock_config_file):
         "utils.tool_loader.open", lambda path, mode: open(mock_config_file, mode)
     ):
         enabled_tools = get_enabled_tools_from_config()
-        assert enabled_tools == ["tool1", "tool2"], "Should return the enabled tools from config"
+        assert enabled_tools == [
+            "tool1",
+            "tool2",
+        ], "Should return the enabled tools from config"
 
 
 def test_get_enabled_tools_from_config_file_not_found():
     """Test that the function returns an empty list when the configuration file is not found."""
     with patch("utils.tool_loader.open", side_effect=FileNotFoundError):
         enabled_tools = get_enabled_tools_from_config()
-        assert enabled_tools == [], "Should return an empty list if config file is missing"
+        assert (
+            enabled_tools == []
+        ), "Should return an empty list if config file is missing"
 
 
 class MockTool(AssistantToolBase):
@@ -69,7 +74,9 @@ def test_load_tools_from_package():
     ):
         tools = load_tools_from_package(mock_package)
         assert len(tools) == 1, "Should load one tool from the package"
-        assert isinstance(tools[0], MockTool), "Loaded tool should be an instance of MockTool"
+        assert isinstance(
+            tools[0], MockTool
+        ), "Loaded tool should be an instance of MockTool"
 
 
 def test_load_tools_from_package_no_enabled_tools():

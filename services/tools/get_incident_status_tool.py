@@ -90,4 +90,6 @@ class GetIncidentStatusTool(AssistantToolBase):
         :param is_valid: Indica se o número do incidente está no formato correto.
         :return: Dados simulados do incidente no formato de dicionário ou mensagem de erro.
         """
-        return self.get_incident_status(incident_number=incident_number, is_valid=is_valid)
+        return self.get_incident_status(
+            incident_number=incident_number, is_valid=is_valid
+        )

@@ -53,6 +53,8 @@ def load_tools_from_package(package):
     # Reporta os que configurou mas não conseguiu carregar
     missing = set(enabled_tools) - successfully_loaded
     if missing:
-        logger.warning(f"As seguintes ferramentas não foram carregadas: {', '.join(missing)}")
+        logger.warning(
+            f"As seguintes ferramentas não foram carregadas: {', '.join(missing)}"
+        )
 
     return tools
