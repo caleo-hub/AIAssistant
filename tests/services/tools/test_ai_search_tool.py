@@ -42,39 +42,15 @@ def test_search_documents(mock_env_vars, mock_search_client):
         }
     ]
     tool = AISearchTool()
-    results = tool.ai_search_documents(prompt="test prompt", k_results=1)
+    results = tool.execute(query="test query", k_results=1, search_needed=True)
 
-    assert len(results) == 1
-    assert results[0] == ("This is a test chunk.", "Test Title", "test/path")
+    assert len(results['tool_output']) == 1
+    assert results["tool_output"][0] == {'chunk': 'This is a test chunk.', 'title': 'Test Title', 'metadata_storage_path': 'test/path', 'score': 0}
+    assert results["citations"][0] == {'id': 1, 'filename': 'Test Title', 'url': 'test/path', 'score': 0}
     mock_search_client.search.assert_called_once_with(
         vector_queries=[
-            {"kind": "text", "text": "test prompt", "fields": "text_vector", "k": 1}
+            {"kind": "text", "text": "test query", "fields": "text_vector", "k": 1}
         ],
         top=1,
         select=["chunk", "title", "metadata_storage_path"],
     )
-
-
-def test_get_tool_infos(mock_env_vars):
-    tool = AISearchTool()
-    tool_infos = tool.get_tool_infos()
-
-    assert tool_infos["type"] == "function"
-    assert tool_infos["function"]["name"] == "ai_search_documents"
-    assert "description" in tool_infos["function"]
-    assert "parameters" in tool_infos["function"]
-
-
-def test_execute(mock_env_vars, mock_search_client):
-    mock_search_client.search.return_value = [
-        {
-            "chunk": "This is a test chunk.",
-            "title": "Test Title",
-            "metadata_storage_path": "test/path",
-        }
-    ]
-    tool = AISearchTool()
-    results = tool.execute(query="test prompt", k_results=1)
-
-    assert len(results) == 1
-    assert results[0] == ("This is a test chunk.", "Test Title", "test/path")

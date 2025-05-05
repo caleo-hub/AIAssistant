@@ -136,6 +136,7 @@ class ChatServices:
         self.assistant = self.assistant_instance.assistant
         # inicializa ferramenta de busca vetorizada
         self.search_tool = AISearchTool()
+        self.citations = []
 
     def create_new_thread(self):
         logging.info("Criando nova thread.")
@@ -194,10 +195,10 @@ class ChatServices:
                 for block in assistant_message.content:
                     if block.type == "text" and hasattr(block, "text"):
                         answer += block.text.value
+            return answer, self.citations
 
         elif run.status == "requires_action":
             tool_outputs = []
-            self.citations = []
             for tool in run.required_action.submit_tool_outputs.tool_calls:
                 tool_return = self.assistant_instance.call_tool_by_name(
                     name=tool.function.name, arguments=tool.function.arguments

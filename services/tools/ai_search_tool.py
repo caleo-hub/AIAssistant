@@ -119,8 +119,8 @@ class AISearchTool(AssistantToolBase):
 
     def _format_citation(self, results):
         citations = []
-        for i, (_, title, path, score) in enumerate(results, start=1):
-            citations.append({"id": i, "filename": title, "url": path, "score": score})
+        for i, result in enumerate(results, start=1):
+            citations.append({"id": i, "filename": result.get("title", "Sem Título"), "url": result.get("metadata_storage_path","Sem Link"), "score": result.get("score","Sem score")})
         return citations
 
     def _process_results(self, results):
@@ -131,12 +131,12 @@ class AISearchTool(AssistantToolBase):
         :return: Lista de tuplas no formato (chunk, title, metadata_storage_path).
         """
         processed_results = [
-            (
-                result.get("chunk", "")[:300],  # Limita o chunk a 300 caracteres
-                result.get("title", "sem título"),
-                result.get("metadata_storage_path", "sem nome"),
-                result.get("@search.score", 0),  # Adiciona o score de relevância
-            )
+            {
+            "chunk": result.get("chunk", "")[:300],  # Limita o chunk a 300 caracteres
+            "title": result.get("title", "sem título"),
+            "metadata_storage_path": result.get("metadata_storage_path", "sem nome"),
+            "score": result.get("@search.score", 0),  # Adiciona o score de relevância
+            }
             for result in results
         ]
         return processed_results
