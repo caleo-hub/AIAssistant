@@ -4,6 +4,7 @@ from services.tools.ai_search_tool import (
     AISearchTool,
 )
 
+
 class ChatServices:
     def __init__(self):
         # inicializa o assistente e o cliente OpenAI

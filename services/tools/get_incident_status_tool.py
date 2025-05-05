@@ -24,7 +24,7 @@ class GetIncidentStatusTool(AssistantToolBase):
             "properties": {
                 "incident_number": {
                     "type": "string",
-                    "description": "Número do incidente para o qual as informações serão simuladas. Deve estar no formato INC seguido de 8 dígitos, como INC01816525.",
+                    "description": "Número do incidente para o qual as informações serão simuladas. Deve estar no formato INC seguido de 8 dígitos",
                     "pattern": "^INC\\d{8}$",
                 },
                 "is_valid": {
@@ -93,7 +93,9 @@ class GetIncidentStatusTool(AssistantToolBase):
         incident_number = kwargs.get("incident_number")
         is_valid = kwargs.get("is_valid")
         if not incident_number:
-            return "tool_output": {"Incidente não identificado. Poderia digitar novamente o número do incidente?"}
+            return {
+                "tool_output": "Incidente não identificado. Poderia digitar novamente o número do incidente?"
+            }
         return self.get_incident_status(
             incident_number=incident_number, is_valid=is_valid
         )

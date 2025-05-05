@@ -46,7 +46,10 @@ class CallTeamsAgentTool(AssistantToolBase):
 
         # 2) Monta o prompt de system + histórico
         chat_payload = [
-            {"role": "system", "content": "Você é um assistente que resume conversas e extrai somente o que o usuário deseja resolver."},
+            {
+                "role": "system",
+                "content": "Você é um assistente que resume conversas e extrai somente o que o usuário deseja resolver.",
+            },
             {"role": "user", "content": "Resuma a seguinte conversa:"},
         ]
         for entry in formatted:
