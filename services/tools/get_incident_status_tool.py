@@ -92,10 +92,8 @@ class GetIncidentStatusTool(AssistantToolBase):
         """
         incident_number = kwargs.get("incident_number")
         is_valid = kwargs.get("is_valid")
-        if not incident_number or not is_valid:
-            raise ValueError(
-                "Os parâmetros 'incident_number' e 'is_valid' são obrigatórios."
-            )
+        if not incident_number:
+            return "tool_output": {"Incidente não identificado. Poderia digitar novamente o número do incidente?"}
         return self.get_incident_status(
             incident_number=incident_number, is_valid=is_valid
         )
