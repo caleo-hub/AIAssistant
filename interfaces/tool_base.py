@@ -10,7 +10,7 @@ class AssistantToolBase(ABC):
         pass
 
     @abstractmethod
-    def execute(self, *args, **kwargs):
+    def execute(self, context, **kwargs):
         """
         This method should define the functionality of the tool when it is executed.
         """

@@ -82,7 +82,7 @@ class GetIncidentStatusTool(AssistantToolBase):
             },
         }
 
-    def execute(self, incident_number: str, is_valid: bool):
+    def execute(self, **kwargs):
         """
         Executa a simulação de obtenção de informações de um incidente.
 
@@ -90,6 +90,12 @@ class GetIncidentStatusTool(AssistantToolBase):
         :param is_valid: Indica se o número do incidente está no formato correto.
         :return: Dados simulados do incidente no formato de dicionário ou mensagem de erro.
         """
+        incident_number = kwargs.get("incident_number")
+        is_valid = kwargs.get("is_valid")
+        if not incident_number or not is_valid:
+            raise ValueError(
+                "Os parâmetros 'incident_number' e 'is_valid' são obrigatórios."
+            )
         return self.get_incident_status(
             incident_number=incident_number, is_valid=is_valid
         )

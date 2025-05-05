@@ -65,20 +65,21 @@ class Assistant:
             for tool in self.tool_instances
         }
 
-    def call_tool_by_name(self, name, arguments: str):
+    def call_tool_by_name(self, context, name, arguments: str):
         """Chama uma ferramenta pelo nome."""
 
         # Converte a string de um dicionário para um dicionário real
         try:
-            arguments = json.loads(arguments)
-            if not isinstance(arguments, dict):
+            args = json.loads(arguments)
+            if not isinstance(args, dict):
                 raise ValueError(
                     "Os argumentos fornecidos não são um dicionário válido."
                 )
         except (ValueError, SyntaxError) as e:
             raise ValueError(f"Erro ao processar os argumentos: {e}")
 
+        args["context"] = context
         tool = self.tool_map.get(name)
         if not tool:
             raise ValueError(f"Ferramenta '{name}' não encontrada.")
-        return tool.execute(**arguments)
+        return tool.execute(**args)

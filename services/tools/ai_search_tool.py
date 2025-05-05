@@ -169,7 +169,7 @@ class AISearchTool(AssistantToolBase):
             },
         }
 
-    def execute(self, query: str, k_results: int = 3, search_needed: bool = True):
+    def execute(self, **kwargs):
         """
         Executa a busca vetorizada com os parâmetros fornecidos.
 
@@ -177,6 +177,11 @@ class AISearchTool(AssistantToolBase):
         :param k_results: Número de resultados a serem retornados (padrão: 3).
         :return: Resultados da busca no formato de lista de tuplas.
         """
+        query = kwargs.get("query", "")
+        k_results = kwargs.get("k_results", 3)
+        search_needed = kwargs.get("search_needed", True)
+        if not query:
+            raise ValueError("O parâmetro 'query' é obrigatório.")
         return self.ai_search_tool(
             query=query, k_results=k_results, search_needed=search_needed
         )

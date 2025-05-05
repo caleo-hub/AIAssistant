@@ -67,11 +67,14 @@ class WeatherSimulationTool(AssistantToolBase):
             },
         }
 
-    def execute(self, city: str):
+    def execute(self, **kwargs):
         """
         Executa a simulação de obtenção do clima para a cidade fornecida.
 
         :param city: Nome da cidade para a qual o clima será simulado.
         :return: Dados simulados do clima no formato de dicionário.
         """
+        city = kwargs.get("city")
+        if not city:
+            raise ValueError("O parâmetro 'city' é obrigatório.")
         return self.get_weather(city=city)

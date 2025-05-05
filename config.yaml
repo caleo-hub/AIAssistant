@@ -1,6 +1,7 @@
 tools:
   enabled:
-    - math_tool
+    - must_fail_load_tool
+    - transfer_to_teams_agent_tool
     - get_weather_tool
     - ai_search_tool
     - get_incident_status_tool
