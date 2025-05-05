@@ -1,16 +1,13 @@
 import importlib
-import pkgutil
 import inspect
 import logging
 import yaml
 from interfaces.tool_base import AssistantToolBase
 
-# Configura o logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)  # Ou DEBUG para mais verbosidade
+logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-formatter = logging.Formatter("[%(levelname)s] %(message)s")
-handler.setFormatter(formatter)
+handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
 logger.addHandler(handler)
 
 
@@ -18,7 +15,7 @@ def get_enabled_tools_from_config(path="config.yaml"):
     try:
         with open(path, "r") as file:
             config = yaml.safe_load(file)
-        return config.get("tools", {}).get("enabled", [])
+        return config.get("tools", {}).get("enabled", []) or []
     except Exception as e:
         logger.error(f"Erro ao carregar config.yaml: {e}")
         return []
@@ -26,48 +23,36 @@ def get_enabled_tools_from_config(path="config.yaml"):
 
 def load_tools_from_package(package):
     tools = []
-    allowed_tools = (
-        set(get_enabled_tools_from_config())
-        if get_enabled_tools_from_config()
-        else set()
-    )
-    successfully_loaded = set()
-
-    if not allowed_tools:
+    enabled_tools = get_enabled_tools_from_config()
+    if not enabled_tools:
         logger.warning("Nenhuma ferramenta habilitada em config.yaml.")
         return tools
 
-    for _, module_name, _ in pkgutil.iter_modules(package.__path__):
-        if module_name not in allowed_tools:
-            logger.debug(f"Ignorando módulo não permitido: {module_name}")
-            continue
+    successfully_loaded = set()
 
+    # Itera na ordem exata em que aparecem no config
+    for module_name in enabled_tools:
         try:
             module = importlib.import_module(f"{package.__name__}.{module_name}")
         except ImportError as e:
             logger.error(f"Erro ao importar módulo '{module_name}': {e}")
-            continue
-
+            continue  # NÃO interrompe o loop
         found = False
-        for name, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, AssistantToolBase) and obj is not AssistantToolBase:
+        for _, cls in inspect.getmembers(module, inspect.isclass):
+            if issubclass(cls, AssistantToolBase) and cls is not AssistantToolBase:
                 try:
-                    tools.append(obj())
-                    logger.info(f"Tool carregada: {name}")
-                    found = True
+                    tools.append(cls())
+                    logger.info(f"Tool carregada: {cls.__name__}")
                     successfully_loaded.add(module_name)
-                except Exception as e:
-                    logger.error(f"Erro ao instanciar '{name}' em '{module_name}': {e}")
+                    found = True
+                except Exception as inst_e:
+                    logger.error(f"Erro ao instanciar '{cls.__name__}': {inst_e}")
         if not found:
-            logger.warning(
-                f"Nenhuma classe válida encontrada no módulo '{module_name}'."
-            )
+            logger.warning(f"Nenhuma classe válida encontrada em '{module_name}'.")
 
-    # Verifica quais não foram carregadas
-    failed_tools = allowed_tools - successfully_loaded
-    if failed_tools:
-        logger.warning(
-            f"As seguintes ferramentas não foram carregadas: {', '.join(failed_tools)}"
-        )
+    # Reporta os que configurou mas não conseguiu carregar
+    missing = set(enabled_tools) - successfully_loaded
+    if missing:
+        logger.warning(f"As seguintes ferramentas não foram carregadas: {', '.join(missing)}")
 
     return tools

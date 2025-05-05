@@ -206,15 +206,11 @@ class ChatServices:
                     f"Function Name {tool.function.name}\nArguments:{tool.function.arguments}"
                 )
                 if tool.function.name == "ai_search_tool":
-                    for i, (_, title, path) in enumerate(tool_return, start=1):
-                        self.citations.append(
-                            {
-                                "id": i,
-                                "filename": title,
-                                "url": path,
-                            }
-                        )
-                tool_output = {"tool_call_id": tool.id, "output": str(tool_return)}
+                    self.citations += tool_return.get("citations", [])
+                tool_output = {
+                    "tool_call_id": tool.id,
+                    "output": str(tool_return.get("tool_output", "No output")),
+                }
                 tool_outputs.append(tool_output)
             try:
                 run = self.client.beta.threads.runs.submit_tool_outputs_and_poll(

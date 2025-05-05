@@ -74,7 +74,7 @@ def test_execute(mock_env_vars, mock_search_client):
         }
     ]
     tool = AISearchTool()
-    results = tool.execute(prompt="test prompt", k_results=1)
+    results = tool.execute(query="test prompt", k_results=1)
 
     assert len(results) == 1
     assert results[0] == ("This is a test chunk.", "Test Title", "test/path")

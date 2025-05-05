@@ -14,7 +14,20 @@ class WeatherSimulationTool(AssistantToolBase):
         """
         Inicializa a classe WeatherSimulationTool.
         """
-        pass
+        # Variáveis do dicionário get_tool_infos
+        self.tool_type = "function"
+        self.tool_name = "get_weather"
+        self.tool_description = "Retorna o clima de um cidade específica."
+        self.tool_parameters = {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "description": "Nome da cidade para a qual o clima será simulado.",
+                }
+            },
+            "required": ["city"],
+        }
 
     def get_weather(self, city: str):
         """
@@ -28,11 +41,13 @@ class WeatherSimulationTool(AssistantToolBase):
 
         # Dados climáticos simulados
         simulated_weather = {
-            "city": city,
-            "temperature": "25°C",
-            "condition": "Ensolarado",
-            "humidity": "60%",
-            "wind_speed": "15 km/h",
+            "tool_output": {
+                "city": city,
+                "temperature": "25°C",
+                "condition": "Ensolarado",
+                "humidity": "60%",
+                "wind_speed": "15 km/h",
+            }
         }
 
         return simulated_weather
@@ -44,20 +59,11 @@ class WeatherSimulationTool(AssistantToolBase):
         :return: Dicionário com as informações da ferramenta.
         """
         return {
-            "type": "function",
+            "type": self.tool_type,
             "function": {
-                "name": "get_weather",
-                "description": "Retorna o clima de um cidade específica.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "city": {
-                            "type": "string",
-                            "description": "Nome da cidade para a qual o clima será simulado.",
-                        }
-                    },
-                    "required": ["city"],
-                },
+                "name": self.tool_name,
+                "description": self.tool_description,
+                "parameters": self.tool_parameters,
             },
         }
 

@@ -27,6 +27,25 @@ class AISearchTool(AssistantToolBase):
         self.credential = self._create_credential()
         self.client = self._create_search_client()
 
+        # Variáveis do dicionário get_tool_infos
+        self.tool_type = "function"
+        self.tool_name = "ai_search_tool"
+        self.tool_description = "Data source para RAG do chatbot"
+        self.tool_parameters = {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "A exato solicitação/query do usuário no chat para o Retrieval Augmented Generation",
+                },
+                "search_needed": {
+                    "type": "boolean",
+                    "description": "Avalia se aquery do usuário precisa de um Retrieval Augmented Generation ou não precisa",
+                },
+            },
+            "required": ["query", "search_needed"],
+        }
+
     def _create_credential(self):
         """
         Cria e retorna as credenciais para autenticação no Azure Cognitive Search.
@@ -58,20 +77,27 @@ class AISearchTool(AssistantToolBase):
         Realiza uma busca vetorizada no índice configurado no Azure Cognitive Search.
 
         :param kwargs: Parâmetros opcionais, incluindo:
-            - prompt (str): Texto a ser pesquisado.
+            - query (str): Texto a ser pesquisado.
             - k_results (int): Número de resultados a serem retornados (padrão: 3).
         :return: Lista de tuplas contendo os resultados no formato:
             (chunk, title, metadata_storage_path).
         """
-        prompt = kwargs.get("prompt", "")
+        search_needed = kwargs.get("search_needed", True)
+        query = kwargs.get("query", "")
         k_results = kwargs.get("k_results", 3)
+
+        if not search_needed:
+            return {
+                "tool_output": None,
+                "citations": [],
+            }
 
         # 🔍 Realiza a busca vetorizada
         results = self.client.search(
             vector_queries=[
                 {
-                    "kind": "text",  # ou "vector" se você quiser passar o vetor manualmente
-                    "text": prompt,
+                    "kind": "text",
+                    "text": query,
                     "fields": self.campo_vetorial,
                     "k": k_results,
                 }
@@ -85,7 +111,17 @@ class AISearchTool(AssistantToolBase):
         )
 
         # 📦 Processa os resultados
-        return self._process_results(results)
+        processed_results = self._process_results(results)
+        return {
+            "tool_output": processed_results,
+            "citations": self._format_citation(processed_results),
+        }
+
+    def _format_citation(self, results):
+        citations = []
+        for i, (_, title, path, score) in enumerate(results, start=1):
+            citations.append({"id": i, "filename": title, "url": path, "score": score})
+        return citations
 
     def _process_results(self, results):
         """
@@ -94,14 +130,16 @@ class AISearchTool(AssistantToolBase):
         :param results: Resultados retornados pelo cliente de busca.
         :return: Lista de tuplas no formato (chunk, title, metadata_storage_path).
         """
-        return [
+        processed_results = [
             (
                 result.get("chunk", "")[:300],  # Limita o chunk a 300 caracteres
                 result.get("title", "sem título"),
                 result.get("metadata_storage_path", "sem nome"),
+                result.get("@search.score", 0),  # Adiciona o score de relevância
             )
             for result in results
         ]
+        return processed_results
 
     def get_tool_infos(self):
         """
@@ -110,24 +148,15 @@ class AISearchTool(AssistantToolBase):
         :return: Dicionário com as informações da ferramenta.
         """
         return {
-            "type": "function",
+            "type": self.tool_type,
             "function": {
-                "name": "ai_search_tool",
-                "description": "Data source para RAG do chatbot",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "prompt": {
-                            "type": "string",
-                            "description": "O prompt do usuário",
-                        }
-                    },
-                    "required": ["prompt"],
-                },
+                "name": self.tool_name,
+                "description": self.tool_description,
+                "parameters": self.tool_parameters,
             },
         }
 
-    def execute(self, prompt: str, k_results: int = 3):
+    def execute(self, query: str, k_results: int = 3, search_needed: bool = True):
         """
         Executa a busca vetorizada com os parâmetros fornecidos.
 
@@ -135,4 +164,6 @@ class AISearchTool(AssistantToolBase):
         :param k_results: Número de resultados a serem retornados (padrão: 3).
         :return: Resultados da busca no formato de lista de tuplas.
         """
-        return self.ai_search_tool(prompt=prompt, k_results=k_results)
+        return self.ai_search_tool(
+            query=query, k_results=k_results, search_needed=search_needed
+        )

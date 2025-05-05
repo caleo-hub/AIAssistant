@@ -1,5 +1,8 @@
 tools:
   enabled:
+    - math_tool
     - get_weather_tool
     - ai_search_tool
-    - math_tool
+    - get_incident_status_tool
+
+

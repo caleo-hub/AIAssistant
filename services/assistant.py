@@ -3,6 +3,7 @@ from services import tools as tools_package
 from openai import AzureOpenAI
 import os
 import ast
+import json
 
 
 class Assistant:
@@ -69,7 +70,7 @@ class Assistant:
 
         # Converte a string de um dicionário para um dicionário real
         try:
-            arguments = ast.literal_eval(arguments)
+            arguments = json.loads(arguments)
             if not isinstance(arguments, dict):
                 raise ValueError(
                     "Os argumentos fornecidos não são um dicionário válido."
