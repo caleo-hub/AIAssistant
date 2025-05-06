@@ -1,10 +1,11 @@
+import os
 import time
+import requests
 from interfaces.tool_base import AssistantToolBase
-
 
 class GetIncidentStatusTool(AssistantToolBase):
     """
-    Classe para simular a obtenção de informações de um incidente no ServiceNow
+    Classe para buscar informações de um incidente no ServiceNow
     com base no número do incidente fornecido pelo usuário.
     """
 
@@ -12,66 +13,33 @@ class GetIncidentStatusTool(AssistantToolBase):
         """
         Inicializa a classe GetIncidentStatusTool.
         """
-        # Variáveis do dicionário get_tool_infos
+        # Configurações da API (pode passar por environment vars)
+        self.instance_url = os.getenv("SN_INSTANCE_URL")
+        self.user = os.getenv("SN_USER")
+        self.pwd = os.getenv("SN_PWD")
+        
+        # Configurações do tool_info
         self.tool_type = "function"
         self.tool_name = "get_incident_status"
         self.tool_description = (
-            "Simula a obtenção do status e detalhes de um incidente do ServiceNow "
-            "com base no número do incidente fornecido."
+            "Busca o status e detalhes de um incidente do ServiceNow "
+            "usando a Table API e o número do incidente."
         )
         self.tool_parameters = {
             "type": "object",
             "properties": {
                 "incident_number": {
                     "type": "string",
-                    "description": "Número do incidente para o qual as informações serão simuladas. Deve estar no formato INC seguido de 8 dígitos",
+                    "description": "Número do incidente.",
                     "pattern": "^INC\\d{8}$",
-                },
-                "is_valid": {
-                    "type": "boolean",
-                    "description": "Indica se o número do incidente está no formato correto (true) ou incorreto (false).",
-                },
-            },
-            "required": ["incident_number", "is_valid"],
-        }
-
-    def get_incident_status(self, incident_number: str, is_valid: bool):
-        """
-        Simula a obtenção de informações de um incidente no ServiceNow.
-
-        :param incident_number: Número do incidente fornecido pelo usuário.
-        :param is_valid: Indica se o número do incidente está no formato correto.
-        :return: Dicionário contendo informações simuladas do incidente ou mensagem de erro.
-        """
-        if not is_valid:
-            return {
-                "tool_output": {
-                    "error": "O número do incidente foi digitado incorretamente. Verifique o formato e tente novamente."
                 }
-            }
-
-        # Simula um atraso para imitar o tempo de resposta de uma API real
-        time.sleep(2)
-
-        # Resposta simulada para demonstração
-        simulated_response = {
-            "tool_output": {
-                "incident_number": incident_number,
-                "status": "Resolved",
-                "priority": "High",
-                "assigned_to": "John Doe",
-                "short_description": "System outage affecting multiple users",
-                "resolution_notes": "Issue resolved by restarting the affected services.",
-            }
+            },
+            "required": ["incident_number"],
         }
-
-        return simulated_response
 
     def get_tool_infos(self):
         """
         Retorna as informações da ferramenta, incluindo o tipo e os parâmetros esperados.
-
-        :return: Dicionário com as informações da ferramenta.
         """
         return {
             "type": self.tool_type,
@@ -82,20 +50,48 @@ class GetIncidentStatusTool(AssistantToolBase):
             },
         }
 
+    def get_incident_status(self, incident_number: str):
+        """
+        Realiza chamada HTTP à ServiceNow Table API para buscar o incidente.
+        """
+        # Monta URL e parâmetros de consulta
+        url = f"{self.instance_url}/api/now/table/u_mock_incident"
+        params = {
+            "sysparm_query": f"number={incident_number}",
+            "sysparm_limit": 1
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+        # Faz a requisição
+        response = requests.get(url, auth=(self.user, self.pwd), headers=headers, params=params)
+        if response.status_code != 200:
+            return {"tool_output": {
+                "error": f"Falha na requisição ({response.status_code}): {response.text}"
+            }}
+
+        result = response.json().get("result", [])
+        if not result:
+            return {"tool_output": {
+                "message": f"Nenhum incidente encontrado com o número {incident_number}."
+            }}
+
+        # Retorna o primeiro registro encontrado
+        record = result[0]
+        return {"tool_output": record}
+
     def execute(self, **kwargs):
         """
-        Executa a simulação de obtenção de informações de um incidente.
-
-        :param incident_number: Número do incidente fornecido pelo usuário.
-        :param is_valid: Indica se o número do incidente está no formato correto.
-        :return: Dados simulados do incidente no formato de dicionário ou mensagem de erro.
+        Entry-point para o tool: valida e dispara a busca.
         """
         incident_number = kwargs.get("incident_number")
-        is_valid = kwargs.get("is_valid")
         if not incident_number:
             return {
-                "tool_output": "Incidente não identificado. Poderia digitar novamente o número do incidente?"
+                "tool_output": {
+                    "error": "Por favor, informe o número do incidente."
+                }
             }
-        return self.get_incident_status(
-            incident_number=incident_number, is_valid=is_valid
-        )
+        return self.get_incident_status(incident_number=incident_number)
+
