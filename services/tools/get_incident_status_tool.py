@@ -57,7 +57,7 @@ class GetIncidentStatusTool(AssistantToolBase):
         # Monta URL e parâmetros de consulta
         url = f"{self.instance_url}/api/now/table/u_mock_incident"
         params = {
-            "sysparm_query": f"number={incident_number}",
+            "sysparm_query": f"u_number={incident_number}",
             "sysparm_limit": 1
         }
         headers = {
