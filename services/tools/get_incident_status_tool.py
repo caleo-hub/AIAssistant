@@ -54,10 +54,9 @@ class GetIncidentStatusTool(AssistantToolBase):
         """
         Realiza chamada HTTP à ServiceNow Table API para buscar o incidente.
         """
-        # Monta URL e parâmetros de consulta
-        url = f"{self.instance_url}/api/now/table/u_mock_incident"
+        url = f"{self.instance_url}/api/now/table/incident"
         params = {
-            "sysparm_query": f"u_number={incident_number}",
+            "sysparm_query": f"number={incident_number}",
             "sysparm_limit": 1
         }
         headers = {
@@ -65,7 +64,6 @@ class GetIncidentStatusTool(AssistantToolBase):
             "Accept": "application/json"
         }
 
-        # Faz a requisição
         response = requests.get(url, auth=(self.user, self.pwd), headers=headers, params=params)
         if response.status_code != 200:
             return {"tool_output": {
@@ -78,9 +76,7 @@ class GetIncidentStatusTool(AssistantToolBase):
                 "message": f"Nenhum incidente encontrado com o número {incident_number}."
             }}
 
-        # Retorna o primeiro registro encontrado
-        record = result[0]
-        return {"tool_output": record}
+        return {"tool_output": result[0]}
 
     def execute(self, **kwargs):
         """
