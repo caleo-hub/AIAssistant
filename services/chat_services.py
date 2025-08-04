@@ -35,6 +35,7 @@ class ChatServices:
         )
 
     def execute_assistant(self):
+        self.citations = []
         logging.info("Executando assistente.")
         try:
             self.run = self.client.beta.threads.runs.create(
