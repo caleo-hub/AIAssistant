@@ -23,6 +23,7 @@ class ChatServices:
 
     def retrieve_old_thread(self, thread_id):
         logging.info(f"Recuperando thread existente: {thread_id}")
+        self.thread_id = thread_id
         self.client.beta.threads.retrieve(thread_id=thread_id)
 
     def add_user_message(self, content: str):
@@ -35,6 +36,7 @@ class ChatServices:
         )
 
     def execute_assistant(self):
+        self.citations = []
         logging.info("Executando assistente.")
         try:
             self.run = self.client.beta.threads.runs.create(
@@ -44,19 +46,23 @@ class ChatServices:
                     "e bem estruturadas. Sempre utilize o contexto recuperado via RAG para fundamentar suas respostas, "
                     "cite as fontes recuperadas (use números entre colchetes para indicar citações) "
                     "e formate tudo em Markdown (títulos, listas, blocos de código, etc.). "
-                    "Caso não encontre informações relevantes, diga apenas: Desculpe, não consegui encontrar informações relevantes para sua pergunta. "
+                    #"Caso não encontre informações relevantes, diga apenas: Desculpe, não consegui encontrar informações relevantes para sua pergunta. "
                 ),
                 assistant_id=self.assistant.id,
-                tool_choice="required",
+                tool_choice="auto",
             )
 
             # espera até completar
             while self.run.status in ["queued", "in_progress", "cancelling"]:
-                logging.debug(f"Status do run: {self.run.status}. Aguardando...")
+                logging.warning(f"[RUN]: {self.run.status}. Aguardando...")
                 self.run = self.client.beta.threads.runs.retrieve(
                     thread_id=self.thread_id, run_id=self.run.id
                 )
 
+            logging.warning(f"[RUN]: {self.run.status}")
+            if self.run.status == "failed":
+                err = getattr(self.run, "last_error", None)
+                logging.error(f"[RUN FAILED] {err}")
             # coleta a resposta final
             answer = ""
             if self.run.status == "completed":
@@ -95,12 +101,21 @@ class ChatServices:
                     tool_outputs.append(tool_output)
                 try:
                     self.run = (
-                        self.client.beta.threads.runs.submit_tool_outputs_and_poll(
+                        self.client.beta.threads.runs.submit_tool_outputs(
                             thread_id=self.thread_id,
                             run_id=self.run.id,
                             tool_outputs=tool_outputs,
                         )
                     )
+                    while self.run.status in ["queued", "in_progress", "cancelling"]:
+                        logging.warning(f"[RUN TOOL]: {self.run.status}. Aguardando...")
+                        self.run = self.client.beta.threads.runs.retrieve(
+                            thread_id=self.thread_id, run_id=self.run.id
+                        )
+                    logging.warning(f"[RUN TOOL]: {self.run.status}")
+                    if self.run.status == "failed":
+                        err = getattr(self.run, "last_error", None)
+                        logging.error(f"[RUN TOOL FAILED] {err}")
                     logging.info("Tool outputs submitted successfully.")
                 except Exception as e:
                     logging.error("Failed to submit tool outputs:", e)

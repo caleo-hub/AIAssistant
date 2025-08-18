@@ -140,7 +140,7 @@ class AISearchTool(AssistantToolBase):
         processed_results = [
             {
                 "chunk": result.get("chunk", "")[
-                    :300
+                    :500
                 ],  # Limita o chunk a 300 caracteres
                 "title": result.get("title", "sem título"),
                 "metadata_storage_path": result.get(
@@ -178,7 +178,7 @@ class AISearchTool(AssistantToolBase):
         :return: Resultados da busca no formato de lista de tuplas.
         """
         query = kwargs.get("query", "")
-        k_results = kwargs.get("k_results", 3)
+        k_results = kwargs.get("k_results", 50)
         search_needed = kwargs.get("search_needed", True)
         if not query:
             raise ValueError("O parâmetro 'query' é obrigatório.")
