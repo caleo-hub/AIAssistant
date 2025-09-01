@@ -116,18 +116,28 @@ class AISearchTool(AssistantToolBase):
             "tool_output": processed_results,
             "citations": self._format_citation(processed_results),
         }
-
     def _format_citation(self, results):
         citations = []
+        filename_to_citation = {}
+
         for i, result in enumerate(results, start=1):
-            citations.append(
-                {
-                    "id": i,
-                    "filename": result.get("title", "Sem Título"),
-                    "url": result.get("metadata_storage_path", "Sem Link"),
-                    "score": result.get("score", "Sem score"),
+            filename = result.get("title", "Sem Título")
+            url = result.get("metadata_storage_path", "Sem Link")
+            score = result.get("score", "Sem score")
+
+            if filename in filename_to_citation:
+                # Se já existe, atualiza o score se o novo for maior
+                if score > filename_to_citation[filename]["score"]:
+                    filename_to_citation[filename]["score"] = score
+            else:
+                filename_to_citation[filename] = {
+                    "id": len(filename_to_citation) + 1,
+                    "filename": filename,
+                    "url": url,
+                    "score": score,
                 }
-            )
+
+        citations = list(filename_to_citation.values())
         return citations
 
     def _process_results(self, results):
@@ -139,9 +149,7 @@ class AISearchTool(AssistantToolBase):
         """
         processed_results = [
             {
-                "chunk": result.get("chunk", "")[
-                    :500
-                ],  # Limita o chunk a 300 caracteres
+                "chunk": result.get("chunk", ""),  # Limita o chunk a 300 caracteres
                 "title": result.get("title", "sem título"),
                 "metadata_storage_path": result.get(
                     "metadata_storage_path", "sem nome"
